@@ -2,31 +2,26 @@ package db
 
 import (
 	"database/sql"
-	"github.com/go-sql-driver/mysql"
 	"log"
+	"os"
+
+	"github.com/go-sql-driver/mysql"
 )
 
 var Db *sql.DB
 
 func Init() {
 	cfg := mysql.Config{
-		User:                 "root",
-		Passwd:               "secret",
+		User:                 os.Getenv("DB_USER"),
+		Passwd:               os.Getenv("DB_PASS"),
 		Net:                  "tcp",
-		Addr:                 "127.0.0.1:3306",
-		DBName:               "mydb",
+		Addr:                 os.Getenv("DB_HOST") + ":" + os.Getenv("DB_PORT"),
+		DBName:               os.Getenv("DB_NAME"),
 		AllowNativePasswords: true,
 	}
+	Db, _ = sql.Open("mysql", cfg.FormatDSN())
 
-	var err error
-
-	Db, err = sql.Open("mysql", cfg.FormatDSN())
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	pingErr := Db.Ping()
-	if pingErr != nil {
-		log.Fatal(pingErr)
+	if err := Db.Ping(); err != nil {
+		log.Fatal("Ping error:", err)
 	}
 }

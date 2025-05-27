@@ -16,6 +16,10 @@ type Flat struct {
 }
 
 func Get[ID int | string](t int8, IDs []ID) []Flat {
+	if len(IDs) == 0 {
+		return nil
+	}
+
 	var flats []Flat
 
 	placeholders := make([]string, len(IDs))
