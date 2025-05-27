@@ -10,13 +10,14 @@ services:
       MARIADB_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - ./data/mysql:/var/lib/mysql
-      - ./sql:/docker-entrypoint-initdb.d:ro# ваши .sql
+      - ./sql:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test: [ "CMD", "healthcheck.sh","--connect", "--innodb_initialized"]
+      start_period: 30s
       interval: 10s
       timeout: 5s
-      start_period: 30s
       retries: 20
+
 
   app:
     build:
@@ -29,8 +30,8 @@ services:
       DB_HOST: mysql
       DB_PORT: 3306
       DB_NAME: ${MYSQL_DATABASE}
-      DB_USER: ${MYSQL_USER}
-      DB_PASS: ${MYSQL_PASSWORD}
+      DB_USER: root
+      DB_PASS: ${MYSQL_ROOT_PASSWORD}
       TG_BOT_TOKEN: ${TG_BOT_TOKEN}
       TG_CHAT_ID: ${TG_CHAT_ID}
     restart: unless-stopped

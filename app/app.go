@@ -13,6 +13,8 @@ func Run() {
 	kufarJob := cron.NewKufarSendJob(tgBot)
 	realtJob := cron.NewRealtSendJob(tgBot)
 
+	log.Println("Jobs have been created")
+
 	go func() {
 		err := cron.RunScheduler(kufarJob)
 		if err != nil {

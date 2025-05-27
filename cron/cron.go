@@ -121,11 +121,13 @@ func (p *AdProcessor[T, R]) Execute() error {
 	}
 
 	if len(newAds) < 1 {
+		log.Println("Length is zero")
 		return nil
 	}
 
 	for _, newAd := range newAds {
-		if (len(newAds)) > 5 {
+		if (len(newAds)) > 10 {
+			log.Println("Too many new ads, skipping...")
 			break
 		}
 
