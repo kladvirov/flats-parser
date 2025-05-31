@@ -3,6 +3,7 @@ package helper
 import (
 	"flats-parser/constants"
 	"flats-parser/parser/kufar"
+	"flats-parser/parser/onliner"
 	"flats-parser/parser/realt"
 	"fmt"
 	"regexp"
@@ -138,6 +139,65 @@ func (a RealtAd) GetFloor() int {
 	return a.Floor
 }
 
+type OnlinerAd struct {
+	onliner.Apartment
+}
+
+func (a OnlinerAd) GetType() string {
+	return "ONLINER"
+}
+
+func (a OnlinerAd) GetLink() string {
+	return a.URL
+}
+
+func (a OnlinerAd) GetDescription() string {
+	var roomType string
+	switch a.RentType {
+	case "1_room":
+		roomType = "1-комнатная"
+	case "2_rooms":
+		roomType = "2-комнатная"
+	case "3_rooms":
+		roomType = "3-комнатная"
+	case "4_rooms":
+		roomType = "4-комнатная"
+	case "5_rooms":
+		roomType = "5-комнатная"
+	default:
+		roomType = "Квартира"
+	}
+	return fmt.Sprintf("%s квартира", roomType)
+}
+
+func (a OnlinerAd) GetAddress() string {
+	return a.Location.Address
+}
+
+func (a OnlinerAd) GetPrice() int {
+	price, err := strconv.ParseFloat(a.Price.Amount, 64)
+	if err != nil {
+		return 0
+	}
+	return int(price)
+}
+
+func (a OnlinerAd) GetCurrency() string {
+	return a.Price.Currency
+}
+
+func (a OnlinerAd) GetCommonSquare() float64 {
+	return 0 // Not available in API
+}
+
+func (a OnlinerAd) GetLivingSquare() float64 {
+	return 0 // Not available in API
+}
+
+func (a OnlinerAd) GetFloor() int {
+	return 0 // Not available in API
+}
+
 func MakeDesc(ad Advertisement) string {
 	var desc strings.Builder
 
@@ -175,6 +235,13 @@ func BuildKufarURL(images []string) []string {
 
 func BuildRealtURL(images []string) []string {
 	return limitSlice(images, 10)
+}
+
+func BuildOnlinerURL(photos []string) []string {
+	if len(photos) == 0 {
+		return []string{}
+	}
+	return []string{photos[0]}
 }
 
 func limitSlice[T any](slice []T, maxLen int) []T {
