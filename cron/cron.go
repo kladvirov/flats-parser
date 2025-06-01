@@ -6,13 +6,16 @@ import (
 	"flats-parser/helper"
 	"flats-parser/parser"
 	"flats-parser/parser/kufar"
+	"flats-parser/parser/onliner"
 	"flats-parser/parser/realt"
 	flats "flats-parser/repositories"
 	"flats-parser/telegram"
 	"fmt"
-	"github.com/go-co-op/gocron/v2"
 	"log"
+	"strconv"
 	"time"
+
+	"github.com/go-co-op/gocron/v2"
 )
 
 type AdProcessor[T any, R any] struct {
@@ -99,6 +102,42 @@ func (k *KufarSendJob) Execute() error {
 	return k.processor.Execute()
 }
 
+type OnlinerSendJob struct {
+	processor *AdProcessor[onliner.Apartment, onliner.Response]
+}
+
+func NewOnlinerSendJob(bot *telegram.Bot) *OnlinerSendJob {
+	return &OnlinerSendJob{
+		processor: &AdProcessor[onliner.Apartment, onliner.Response]{
+			ParseURL: constants.ONLINER_PARSE_URL,
+			AdType:   constants.T_ONLINER,
+			TgBot:    bot,
+			BuildURL: helper.BuildOnlinerURL,
+			MakeDesc: func(apartment onliner.Apartment) string {
+				ad := helper.OnlinerAd{Apartment: apartment}
+				return helper.MakeDesc(ad)
+			},
+			ExtractID: func(a onliner.Apartment) int { return a.ID },
+			GetAds: func(r onliner.Response) []onliner.Apartment {
+				var ads []onliner.Apartment
+				for _, apartment := range r.Apartments {
+					price, err := strconv.ParseFloat(apartment.Price.Amount, 64)
+					if err != nil || price > constants.HIGHER_SEARCH_PRICE || price < constants.LOWER_SEARCH_PRICE {
+						continue
+					}
+					ads = append(ads, apartment)
+				}
+				return ads
+			},
+			GetImages: func(a onliner.Apartment) []string { return []string{a.Photo} },
+		},
+	}
+}
+
+func (o *OnlinerSendJob) Execute() error {
+	return o.processor.Execute()
+}
+
 func (p *AdProcessor[T, R]) Execute() error {
 	res, err := parser.Parse[R](p.ParseURL)
 	if err != nil {
@@ -119,6 +158,8 @@ func (p *AdProcessor[T, R]) Execute() error {
 			newAds = append(newAds, ad)
 		}
 	}
+
+	log.Println(newAds)
 
 	if len(newAds) < 1 {
 		log.Println("Length is zero")
