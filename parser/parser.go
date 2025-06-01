@@ -1,31 +1,45 @@
 package parser
 
 import (
+	"compress/gzip"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 )
 
 func Parse[T any](url string) (T, error) {
-	response, err := http.Get(url)
+	var res T
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return *new(T), err
+		return res, err
 	}
-	defer response.Body.Close()
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; Smth/1.0)")
 
-	if response.StatusCode != http.StatusOK {
-		return *new(T), err
-	}
-
-	body, err := io.ReadAll(response.Body)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return *new(T), err
+		return res, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return res, errors.New("unexpected status: " + resp.Status)
 	}
 
-	var result T
-	if err := json.Unmarshal(body, &result); err != nil {
-		return *new(T), err
+	var r io.Reader = resp.Body
+	if resp.Header.Get("Content-Encoding") == "gzip" {
+		gr, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			return res, err
+		}
+		defer gr.Close()
+		r = gr
 	}
 
-	return result, nil
+	if err := json.NewDecoder(r).Decode(&res); err != nil {
+		return res, err
+	}
+	return res, nil
 }
