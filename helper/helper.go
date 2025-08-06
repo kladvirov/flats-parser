@@ -103,40 +103,51 @@ type RealtAd struct {
 	realt.Flat
 }
 
-func (a RealtAd) GetType() string {
+func (r RealtAd) GetType() string {
 	return "REALT"
 }
 
-func (a RealtAd) GetLink() string {
-	return fmt.Sprintf("https://realt.by/rent-flat-for-long/object/%d", a.Code)
+func (r RealtAd) GetLink() string {
+	return fmt.Sprintf("https://realt.by/rent/flat-for-long/%s", r.Flat.UUID)
 }
 
-func (a RealtAd) GetDescription() string {
-	return a.Headline
+func (r RealtAd) GetDescription() string {
+	return r.Flat.Headline
 }
 
-func (a RealtAd) GetAddress() string {
-	return fmt.Sprintf("%s\nБлижайшая станция метро: %s", a.Address, a.Metro)
+func (r RealtAd) GetAddress() string {
+	address := r.Flat.Address
+	if r.Flat.DirectionName != "" {
+		address += fmt.Sprintf("\nНаправление: %s", r.Flat.DirectionName)
+	}
+	return address
 }
 
-func (a RealtAd) GetPrice() int {
-	return a.Price
+func (r RealtAd) GetPrice() int {
+	return r.Flat.Price
 }
 
-func (a RealtAd) GetCurrency() string {
-	return "USD"
+func (r RealtAd) GetCurrency() string {
+	switch r.Flat.PriceCurrency {
+	case 840:
+		return "USD"
+	case 933:
+		return "BYN"
+	default:
+		return "USD"
+	}
 }
 
-func (a RealtAd) GetCommonSquare() float64 {
-	return a.AreaTotal
+func (r RealtAd) GetCommonSquare() float64 {
+	return r.Flat.AreaTotal
 }
 
-func (a RealtAd) GetLivingSquare() float64 {
-	return a.AreaLiving
+func (r RealtAd) GetLivingSquare() float64 {
+	return 0
 }
 
-func (a RealtAd) GetFloor() int {
-	return a.Floor
+func (r RealtAd) GetFloor() int {
+	return 0
 }
 
 type OnlinerAd struct {

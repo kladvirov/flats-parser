@@ -4,11 +4,12 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"errors"
+	"flats-parser/parser/options"
 	"io"
 	"net/http"
 )
 
-func Parse[T any](url string) (T, error) {
+func Parse[T any](url string, opts ...options.Option) (T, error) {
 	var res T
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -17,6 +18,12 @@ func Parse[T any](url string) (T, error) {
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; Smth/1.0)")
+
+	for _, opt := range opts {
+		if err := opt(req); err != nil {
+			return res, err
+		}
+	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
