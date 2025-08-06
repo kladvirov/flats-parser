@@ -234,7 +234,7 @@ func RunScheduler(j Job) error {
 
 	task := gocron.NewTask(runJob(j))
 
-	_, err = s.NewJob(gocron.DurationJob(5*time.Second), task)
+	_, err = s.NewJob(gocron.DurationJob(1*time.Minute), task)
 	if err != nil {
 		return err
 	}

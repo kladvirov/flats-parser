@@ -31,8 +31,8 @@ services:
       DB_HOST: mysql
       DB_PORT: 3306
       DB_NAME: ${MYSQL_DATABASE}
-      DB_USER: root
-      DB_PASS: ${MYSQL_ROOT_PASSWORD}
+      DB_USER: ${MYSQL_USER}
+      DB_PASS: ${MYSQL_PASSWORD}      
       TG_BOT_TOKEN: ${TG_BOT_TOKEN}
       TG_CHAT_ID: ${TG_CHAT_ID}
     restart: unless-stopped

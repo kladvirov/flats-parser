@@ -2,12 +2,13 @@ package app
 
 import (
 	"flats-parser/cron"
+	"flats-parser/db"
 	"flats-parser/telegram"
 	"log"
 )
 
 func Run() {
-	//db.Init()
+	db.Init()
 	tgBot := telegram.New()
 	kufarJob := cron.NewKufarSendJob(tgBot)
 	realtJob := cron.NewRealtSendJob(tgBot)
