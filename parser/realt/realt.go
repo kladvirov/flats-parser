@@ -67,7 +67,7 @@ func BuildFlatsBody() []byte {
 				"isReactAdaptiveUA": false,
 			},
 		},
-		"query": constants.GQL_QUERY,
+		"query": constants.GqlQuery,
 	}
 	b, _ := json.Marshal(payload)
 	return b

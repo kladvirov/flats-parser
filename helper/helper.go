@@ -108,7 +108,7 @@ func (r RealtAd) GetType() string {
 }
 
 func (r RealtAd) GetLink() string {
-	return fmt.Sprintf("https://realt.by/rent/flat-for-long/%s", r.Flat.UUID)
+	return fmt.Sprintf("https://realt.by/rent-flat-for-long/object/%d", r.Flat.Code)
 }
 
 func (r RealtAd) GetDescription() string {
@@ -239,7 +239,7 @@ func BuildKufarURL(images []string) []string {
 	images = limitSlice(images, 10)
 	urls := make([]string, len(images))
 	for i, image := range images {
-		urls[i] = fmt.Sprintf(constants.KUFAR_GALLERY_PATH, image)
+		urls[i] = fmt.Sprintf(constants.KufarGalleryPath, image)
 	}
 	return urls
 }

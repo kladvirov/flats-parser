@@ -13,7 +13,7 @@ import (
 	flats "flats-parser/repositories"
 	"flats-parser/telegram"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -44,8 +44,8 @@ type RealtSendJob struct {
 func NewRealtSendJob(bot *telegram.Bot) *RealtSendJob {
 	return &RealtSendJob{
 		processor: &AdProcessor[realt.Flat, realt.GraphQLResponse]{
-			ParseURL: constants.REALT_PARSE_URL,
-			AdType:   constants.T_REALT,
+			ParseURL: constants.RealtParseUrl,
+			AdType:   constants.TRealt,
 			TgBot:    bot,
 			BuildOpts: func() []options.Option {
 				body := realt.BuildFlatsBody()
@@ -72,7 +72,7 @@ func NewRealtSendJob(bot *telegram.Bot) *RealtSendJob {
 				flatAds := r.Data.SearchObjects.Body.Results
 
 				for _, flat := range flatAds {
-					if flat.Price > constants.HIGHER_SEARCH_PRICE || flat.Price < constants.LOWER_SEARCH_PRICE {
+					if flat.Price > constants.HigherSearchPrice || flat.Price < constants.LowerSearchPrice {
 						continue
 					}
 					ads = append(ads, flat)
@@ -95,8 +95,8 @@ type KufarSendJob struct {
 func NewKufarSendJob(bot *telegram.Bot) *KufarSendJob {
 	return &KufarSendJob{
 		processor: &AdProcessor[kufar.Ad, kufar.Response]{
-			ParseURL: constants.KUFAR_PARSE_URL,
-			AdType:   constants.T_KUFAR,
+			ParseURL: constants.KufarParseUrl,
+			AdType:   constants.TKufar,
 			TgBot:    bot,
 			BuildURL: helper.BuildKufarURL,
 			MakeDesc: func(ad kufar.Ad) string {
@@ -127,8 +127,8 @@ type OnlinerSendJob struct {
 func NewOnlinerSendJob(bot *telegram.Bot) *OnlinerSendJob {
 	return &OnlinerSendJob{
 		processor: &AdProcessor[onliner.Apartment, onliner.Response]{
-			ParseURL: constants.ONLINER_PARSE_URL,
-			AdType:   constants.T_ONLINER,
+			ParseURL: constants.OnlinerParseUrl,
+			AdType:   constants.TOnliner,
 			TgBot:    bot,
 			BuildURL: helper.BuildOnlinerURL,
 			MakeDesc: func(apartment onliner.Apartment) string {
@@ -140,7 +140,7 @@ func NewOnlinerSendJob(bot *telegram.Bot) *OnlinerSendJob {
 				var ads []onliner.Apartment
 				for _, apartment := range r.Apartments {
 					price, err := strconv.ParseFloat(apartment.Price.Amount, 64)
-					if err != nil || price > constants.HIGHER_SEARCH_PRICE || price < constants.LOWER_SEARCH_PRICE {
+					if err != nil || price > constants.HigherSearchPrice || price < constants.LowerSearchPrice {
 						continue
 					}
 					ads = append(ads, apartment)
@@ -179,8 +179,6 @@ func (p *AdProcessor[T, R]) Execute() error {
 		oldIDs[plot.RemoteID] = struct{}{}
 	}
 
-	log.Println(oldFlats)
-
 	var newAds []T
 	for _, ad := range ads {
 		if _, exists := oldIDs[p.ExtractID(ad)]; !exists {
@@ -189,7 +187,7 @@ func (p *AdProcessor[T, R]) Execute() error {
 	}
 
 	if len(newAds) < 1 {
-		log.Println("Length is zero")
+		slog.Info("Length is zero")
 		return nil
 	}
 
@@ -197,25 +195,25 @@ func (p *AdProcessor[T, R]) Execute() error {
 
 	for _, newAd := range newAds {
 		if (len(newAds)) > 10 {
-			log.Println("Too many new ads, skipping...")
+			slog.Info("Too many new ads, skipping...")
 			break
 		}
 
 		images := p.BuildURL(p.GetImages(newAd))
 		err := p.TgBot.SendMediaWithText(images, p.MakeDesc(newAd))
 		if err != nil {
-			log.Printf("ошибка отправки медиа для объявления %d: %v", p.ExtractID(newAd), err)
+			slog.Error("Failed to send media for ad", "error", err, "ad_id", p.ExtractID(newAd))
 			continue
 		}
 		time.Sleep(4 * time.Second)
-		log.Println("Отправил сообщение")
+		slog.Info("Sent message", "ad_id", p.ExtractID(newAd))
 	}
 
 	if err := flats.Insert(adaptFlats); err != nil {
-		return fmt.Errorf("ошибка вставки в базу данных: %w", err)
+		return fmt.Errorf("failed to insert into database: %w", err)
 	}
 
-	log.Println("Успешное выполнение")
+	slog.Info("Successful execution")
 
 	return nil
 }

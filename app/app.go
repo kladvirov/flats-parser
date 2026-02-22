@@ -4,7 +4,10 @@ import (
 	"flats-parser/cron"
 	"flats-parser/db"
 	"flats-parser/telegram"
-	"log"
+	"github.com/go-co-op/gocron/v2"
+	"log/slog"
+	"math/rand"
+	"time"
 )
 
 func Run() {
@@ -14,28 +17,37 @@ func Run() {
 	realtJob := cron.NewRealtSendJob(tgBot)
 	onlinerJob := cron.NewOnlinerSendJob(tgBot)
 
-	log.Println("Jobs have been created")
+	slog.Info("Jobs have been created")
 
-	go func() {
-		err := cron.RunScheduler(kufarJob)
-		if err != nil {
-			log.Printf("Ошибка в kufarJob: %v", err)
-		}
-	}()
+	s, err := gocron.NewScheduler()
+	if err != nil {
+		panic(err)
+	}
 
-	go func() {
-		err := cron.RunScheduler(realtJob)
-		if err != nil {
-			log.Printf("Ошибка в realtJob: %v", err)
-		}
-	}()
+	jobs := []cron.Job{realtJob, onlinerJob, kufarJob}
 
-	go func() {
-		err := cron.RunScheduler(onlinerJob)
+	for _, job := range jobs {
+		task := gocron.NewTask(func(j cron.Job) func() {
+			return func() {
+				if err := j.Execute(); err != nil {
+					slog.Error("Job execution error", "error", err)
+				}
+			}
+		}(job))
+
+		randV := time.Duration(rand.Intn(15)) * time.Second
+		cronJob := gocron.DurationJob(45*time.Second + randV)
+		_, err = s.NewJob(
+			cronJob,
+			task,
+		)
 		if err != nil {
-			log.Printf("Ошибка в onlinerJob: %v", err)
+			slog.Error("Failed to create job", "error", err)
 		}
-	}()
+	}
+
+	s.Start()
+	slog.Info("Scheduler started")
 
 	select {}
 }
