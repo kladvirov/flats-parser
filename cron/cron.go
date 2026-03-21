@@ -17,8 +17,6 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-
-	"github.com/go-co-op/gocron/v2"
 )
 
 type AdProcessor[T any, R any] struct {
@@ -194,7 +192,7 @@ func (p *AdProcessor[T, R]) Execute() error {
 	adaptFlats := adapter.AdsToFlats(p.AdType, newAds, p.ExtractID)
 
 	for _, newAd := range newAds {
-		if (len(newAds)) > 10 {
+		if (len(newAds)) > 20 {
 			slog.Info("Too many new ads, skipping...")
 			break
 		}
@@ -222,22 +220,4 @@ func runJob(j Job) func() error {
 	return func() error {
 		return j.Execute()
 	}
-}
-
-func RunScheduler(j Job) error {
-	s, err := gocron.NewScheduler()
-	if err != nil {
-		panic(err)
-	}
-
-	task := gocron.NewTask(runJob(j))
-
-	_, err = s.NewJob(gocron.DurationJob(1*time.Minute), task)
-	if err != nil {
-		return err
-	}
-
-	s.Start()
-
-	select {}
 }

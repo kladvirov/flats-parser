@@ -32,12 +32,12 @@ func (a Ad) GetID() int {
 }
 
 type Parameter struct {
-	PL string      `json:"pl"`
-	VL interface{} `json:"vl"`
-	P  string      `json:"p"`
-	V  interface{} `json:"v"`
-	PU string      `json:"pu"`
-	G  []GObject   `json:"g,omitempty"`
+	PL string    `json:"pl"`
+	VL any       `json:"vl"`
+	P  string    `json:"p"`
+	V  any       `json:"v"`
+	PU string    `json:"pu"`
+	G  []GObject `json:"g,omitempty"`
 }
 
 type GObject struct {

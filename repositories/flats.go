@@ -23,7 +23,7 @@ func Get[ID int | string](t int8, IDs []ID) []Flat {
 	var flats []Flat
 
 	placeholders := make([]string, len(IDs))
-	args := make([]interface{}, len(IDs)+1)
+	args := make([]any, len(IDs)+1)
 	args[0] = t
 
 	for i, id := range IDs {
@@ -60,18 +60,19 @@ func Insert(flats []Flat) error {
 		return nil
 	}
 
-	query := "INSERT INTO flats (type, remote_id) VALUES "
-	values := make([]interface{}, 0, len(flats)*2)
+	var query strings.Builder
+	query.WriteString("INSERT INTO flats (type, remote_id) VALUES ")
+	values := make([]any, 0, len(flats)*2)
 
 	for i, flat := range flats {
 		if i > 0 {
-			query += ","
+			query.WriteString(",")
 		}
-		query += "(?, ?)"
+		query.WriteString("(?, ?)")
 		values = append(values, flat.Type, flat.RemoteID)
 	}
 
-	_, err := db.Db.Exec(query, values...)
+	_, err := db.Db.Exec(query.String(), values...)
 	if err != nil {
 		return err
 	}

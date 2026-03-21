@@ -31,7 +31,7 @@ func New() *Bot {
 }
 
 func (b *Bot) SendMediaWithText(photoURLs []string, caption string) error {
-	var mediaGroup []interface{}
+	var mediaGroup []any
 
 	for i, url := range photoURLs {
 		photo := tgbotapi.NewInputMediaPhoto(tgbotapi.FileURL(url))

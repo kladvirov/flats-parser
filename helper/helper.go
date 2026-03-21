@@ -69,7 +69,7 @@ func (a KufarAd) GetFloor() int {
 			continue
 		}
 
-		if vSlice, ok := param.V.([]interface{}); ok {
+		if vSlice, ok := param.V.([]any); ok {
 			if len(vSlice) == 0 {
 				return 0
 			}
